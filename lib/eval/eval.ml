@@ -1,3 +1,4 @@
+open Assignment
 open Type
 
 let rec sub e1 x e2 =
@@ -10,10 +11,13 @@ let rec sub e1 x e2 =
 let rec eval env = function
 | Var x -> VarMap.find x env
 | Lam (_, _, _) as lam -> Vclosure (reduce lam, env)
-| App (Lam (x, _, body), g) ->
-    (* TODO: check type of (eval env g) matches type of x *)
-    let env' = VarMap.add x (eval env g) env in
-    eval env' body
+| App (Lam (x, t, body), g) ->
+    let pseudo = TermMap.singleton (Var x) t in
+    let g_t = type_assignment pseudo g in
+    if t = g_t then
+      let env' = VarMap.add x (eval env g) env in
+      eval env' body
+    else Villtyped ("The type of " ^ string_of_term g ^ " does not match " ^ string_of_type t)
 | App (_, _) as app ->
     let app' = reduce app in
     if app' = app then Virreducible
@@ -28,9 +32,10 @@ let rec eval env = function
 and reduce = function
 | Var _ as v -> v
 | Lam (x, t, body) -> Lam (x, t, reduce body)
-| App (Lam (x, _, body), g) ->
-    (* TODO: check type of g matches type of x *)
-    sub g x body
+| App (Lam (x, t, body), g) as self ->
+    if t = type_assignment (TermMap.singleton (Var x) t) g
+    then sub g x body
+    else self
 | App (f, g) -> App (reduce f, reduce g)
 | Bunop (unop, b) -> BLit (unop b)
 | Bbiop (biop, a, b) -> BLit (biop a b)
