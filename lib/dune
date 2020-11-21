@@ -1,2 +1,3 @@
 (library
- (name dependent))
+ (name dependent)
+ (libraries assignment core eval type))
