@@ -1,0 +1,3 @@
+(library
+  (name assignment)
+  (libraries core eval type))
