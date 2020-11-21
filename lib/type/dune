@@ -1,2 +1,3 @@
 (library
-  (name type))
+  (name type)
+  (libraries core))

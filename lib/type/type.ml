@@ -23,19 +23,44 @@ and env = value VarMap.t
 and t =
   | TBool
   | TInt
-  | TFun of string * t * t
-  | TPi of string * t * t
+  | TVar of string
+  | TFun of t * t
+  | TPi of string * t * (string -> t)
   | TStar
 
 and kind =
   | Base of t
   | Higher of t
 
-let rec to_string = function
+module Term = struct
+  type t = term
+  let compare = Core.Poly.compare
+end
+module TermMap = Map.Make(Term)
+
+type pseudocontext = t TermMap.t
+
+let rec string_of_type = function
 | TBool -> "Bool"
 | TInt -> "Int"
-| TFun (_, t1, t2) -> to_string t1 ^ " -> " ^ to_string t2
-| TPi (x, t1, t2) -> "Pi " ^ x ^ ": " ^ to_string t1 ^ ". " ^ to_string t2
+| TVar s -> "'" ^ s
+| TFun (t1, t2) -> string_of_type t1 ^ " -> " ^ string_of_type t2
+| TPi (x, t1, _) ->
+    "Pi " ^ x ^ ": " ^ string_of_type t1 ^ ". " ^ "'t(" ^ x ^ ")"
 | TStar -> "*"
 
-let print t = to_string t |> print_endline
+let print_type t = string_of_type t |> print_endline
+
+let rec string_of_term = function
+| Var v -> v
+| Lam (x, t, body) ->
+    "\\" ^ x ^ ": " ^ string_of_type t ^ ". " ^ string_of_term body
+| App (f, g) -> "(" ^ string_of_term f ^ " " ^ string_of_term g ^ ")"
+| BLit b -> string_of_bool b
+| Bunop (unop, b) -> string_of_bool (unop b)
+| Bbiop (biop, a, b) -> string_of_bool (biop a b)
+| ILit i -> string_of_int i
+| Iunop (unop, i) -> string_of_int (unop i)
+| Ibiop (biop, i, j) -> string_of_int (biop i j)
+
+let print_term t = string_of_term t |> print_endline
