@@ -1,0 +1,3 @@
+(library
+  (name vars)
+  (libraries core type))
