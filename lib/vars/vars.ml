@@ -1,4 +1,5 @@
 open Type
+open Core.Poly
 
 let remove x = List.filter ((<>) x)
 
