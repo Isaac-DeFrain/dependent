@@ -25,7 +25,7 @@ and t =
   | TInt
   | TVar of string
   | TFun of t * t
-  | TPi of string * t * (string -> t)
+  | TPi of string * t * t
   | TStar
   | TBad of term
 
@@ -40,10 +40,10 @@ type pseudocontext = t TermMap.t
 let rec string_of_type = function
 | TBool -> "Bool"
 | TInt -> "Int"
-| TVar s -> "'" ^ s
+| TVar s -> s
 | TFun (t1, t2) -> string_of_type t1 ^ " -> " ^ string_of_type t2
-| TPi (x, t1, _) ->
-    "Pi " ^ x ^ ": " ^ string_of_type t1 ^ ". " ^ "t(" ^ x ^ ")"
+| TPi (x, t1, t2) ->
+    "Pi " ^ x ^ ": " ^ string_of_type t1 ^ ". " ^ string_of_type t2
 | TStar -> "*"
 | TBad term -> "Type error: " ^ string_of_term term
 
@@ -58,6 +58,14 @@ and string_of_term = function
 | ILit i -> string_of_int i
 | Iunop (unop, i) -> string_of_int (unop i)
 | Ibiop (biop, i, j) -> string_of_int (biop i j)
+
+let rec type_vars = function
+| TVar x -> [x]
+| TFun (t_var, t_body) -> sort (type_vars t_var @ type_vars t_body)
+| TPi (x, t_var, t_body) -> sort (x :: type_vars t_var @ type_vars t_body)
+| _ -> []
+
+and sort = List.sort_uniq String.compare
 
 let print_type t = string_of_type t |> print_endline
 
@@ -78,13 +86,3 @@ and string_of_env env =
   |> String.concat ", "
 
 let print_value v = string_of_value v |> print_endline
-
-let rec compare a b =
-  match a, b with
-  | TPi (x, t, body), TPi (x', t', body') ->
-    let cmp_x = Core.Poly.compare x x' in
-    let cmp_t = compare t t' in
-    if cmp_x <> 0 then cmp_x
-    else if cmp_t <> 0 then cmp_t
-    else Core.Poly.compare (body x) (body' x')
-  | _, _ -> Core.Poly.compare a b
