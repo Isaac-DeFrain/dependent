@@ -16,7 +16,7 @@ let omega =
 
 let fun_ab_t = TFun (TVar "a", TVar "b")
 
-let pi_ab_t = TPi ("x", TVar "a", fun _ -> TVar "b")
+let pi_ab_t = TPi ("x", TVar "a", TVar "b")
 
 (* free_vars/vars *)
 let () =
@@ -26,6 +26,14 @@ let () =
   let v = vars true_lam in
   let fv = free_vars true_lam in
   print_res "true_lam vars" (v = ["x"; "y"] && fv = [])
+
+let () =
+  let v = type_vars fun_ab_t in
+  print_res "fun_ab_t vars" (v = ["a"; "b"])
+
+let () =
+  let v = type_vars pi_ab_t in
+  print_res "pi_ab_t vars" (v = ["a"; "b"; "x"])
 
 (* type_assignment *)
 let () =
@@ -84,9 +92,9 @@ let () =
 let () =
   let ( = ) a b = compare a b = 0 in
   let sub_a = sub_type_type TBool "a" pi_ab_t in
-  let expect1 = TPi ("x", TBool, fun _ -> TVar "b") in
+  let expect1 = TPi ("x", TBool, TVar "b") in
   let sub_ab = sub_type_type TInt "b" sub_a in
-  let expect2 = TPi ("x", TBool, fun _ -> TInt) in
+  let expect2 = TPi ("x", TBool, TInt) in
   print_res "sub_type3" (sub_a = expect1) ;
   print_res "sub_type4" (sub_ab = expect2)
 
@@ -98,4 +106,12 @@ let () =
   print_res "type_match1" (type_match' TBool TStar) ;
   print_res "type_match2" (type_match' TBool TBool) ;
   print_res "type_match3" (type_match' fun_ab_t TStar) ;
-  print_res "type_match4" (type_match' fun_ab_t expect)
+  print_res "type_match4" (type_match' fun_ab_t expect) ;
+  let open VarMap in
+  let tenv = singleton "b" TInt in
+  print_res "type_match5" (type_match tenv fun_ab_t expect) ;
+  let tenv = singleton "a" TInt |> add "b" TBool in
+  let expect = TFun (TInt, TBool) in
+  print_res "type_match6" (type_match tenv fun_ab_t expect)
+
+let () = print_all ()
