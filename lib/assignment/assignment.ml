@@ -72,7 +72,8 @@ and type_match tenv t = function
         type_match tenv in_t in_t' && type_match tenv out_t' out_t
     | TPi (x, in_t', out_t') when not (List.mem x (type_vars out_t')) ->
         type_match tenv in_t' in_t && type_match tenv out_t out_t'
-    | TVar v -> env_lookup_match tenv v self
+    | TVar v as var ->
+        var <> in_t && var <> out_t && env_lookup_match tenv v self
     | _ -> false
     end
 | TPi (x, t', body) as self->
@@ -84,12 +85,38 @@ and type_match tenv t = function
     | TVar v -> env_lookup_match tenv v self
     | _ -> false
     end
+(* TODO: TApp *)
+| TApp (t1, t2) ->
+    begin match t with
+    | TApp (t1', t2') -> type_match tenv t1' t1 && type_match tenv t2 t2'
+    | _ -> false
+    end
+| T tm -> type_match tenv t (type_assignment tenv TermMap.empty tm)
 | TBad _ -> false
 
+(* TODO: distinguish between when type variables should be arbitrarily matched and not *)
 and env_lookup_match tenv v t =
   match VarMap.find_opt v tenv with
   | Some t' -> type_match tenv t t'
-  | None -> true
+  | None ->
+      begin match t with
+      | TVar v' -> v = v'
+      | _ -> false
+      end
 
 let type_assignment' = type_assignment VarMap.empty TermMap.empty
 let type_match' = type_match VarMap.empty
+
+type judgement =
+  { pseudo: (term * t) list
+  ; term: term
+  ; t: t }
+
+let check_derivation judge =
+  let pseudo =
+    List.fold_left (fun m (k, v) -> TermMap.add k v m) TermMap.empty judge.pseudo
+  in
+  let term_t = type_assignment VarMap.empty pseudo judge.term in
+  (* print_endline (string_of_term judge.term ^ " has type " ^ string_of_type term_t) ;
+  print_endline ("Type to match " ^ string_of_type judge.t) ; *)
+  type_match' term_t judge.t
