@@ -1,4 +1,4 @@
-open Assignment
+open Assignment.Assign
 open Type
 
 let rec sub e x = function
@@ -12,7 +12,7 @@ let rec eval venv tenv = function
 | Lam (_, _, _) as lam -> Vclosure (reduce tenv lam, venv)
 | App (Lam (x, t, body), g) ->
     let pseudo = TermMap.singleton (Var x) t in
-    let g_t = type_assignment tenv pseudo g in
+    let g_t = type_assign_infer tenv pseudo g in
     let venv' = VarMap.add x (eval venv tenv g) venv in
     begin match t with
     | TVar v ->
@@ -45,7 +45,7 @@ and reduce tenv = function
     begin match t with
     | TVar _ -> sub g x body
     | _ ->
-        if t = type_assignment tenv pseudo g
+        if t = type_assign_infer tenv pseudo g
         then sub g x body
         else self
     end
@@ -64,7 +64,7 @@ and reduce_full tenv = function
     begin match t with
     | TVar _ -> reduce_full tenv (sub g x body)
     | _ ->
-        if t = type_assignment tenv pseudo g
+        if t = type_assign_infer tenv pseudo g
         then reduce_full tenv (sub g x body)
         else self
     end
