@@ -19,7 +19,7 @@
 }
 
 (* convenient REs *)
-let digit = ['0'-'9']
+let digits = ['+' '-']?['0'-'9']+
 let var = ['a'-'z']+
 
 let white = [' ' '\t']
@@ -30,11 +30,14 @@ rule read =
   parse
   | white   { read lexbuf }
   | newline { next_line lexbuf; read lexbuf }
-  (* | digit   { DIGIT (int_of_string (Lexing.lexeme lexbuf)) } *)
+  | digits  { DIGITS (int_of_string (Lexing.lexeme lexbuf)) }
   | "bool"  { BOOL }
   | "int"   { INT }
+  | "true"  { TRUE }
+  | "false" { FALSE }
   | var     { VAR (Lexing.lexeme lexbuf) }
   | "|-"    { TURNSTILE }
+  | "|/-"   { NTURNSTILE }
   | "->"    { ARROW }
   | '*'     { STAR }
   | ':'     { COLON }

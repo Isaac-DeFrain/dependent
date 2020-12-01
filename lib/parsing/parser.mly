@@ -3,10 +3,12 @@
 /* Tokens */
 %token LAM PI
 %token <string> VAR
+%token <int> DIGITS
+%token LPAREN RPAREN
 %token ARROW BOOL INT STAR
+%token FALSE TRUE
 %token COMMA COLON
-%token LPAREN RPAREN DOT
-%token TURNSTILE
+%token TURNSTILE NTURNSTILE DOT
 %token EOF
 
 %start <bool option> check_derivation
@@ -19,7 +21,12 @@ check_derivation:
   | EOF                                      { None }
   | pseudo TURNSTILE type_assign EOF
     { let (term, t) = $3 in
-      Some (Assignment.check_derivation { pseudo=$1; term; t }) } ;
+      let open Assignment.Derive in
+      Some (check_derivation { pseudo=$1; term; t }) }
+  | pseudo NTURNSTILE type_assign EOF
+    { let (term, t) = $3 in
+      let open Assignment.Derive in
+      Some (not (check_derivation { pseudo=$1; term; t })) } ;
 
 type_assign:
   | term COLON t                         { ($1, $3) } ;
@@ -37,6 +44,9 @@ term:
   | LPAREN term RPAREN                         { $2 }
   | term term                        { App ($1, $2) }
   | LAM VAR COLON t DOT term     { Lam ($2, $4, $6) }
+  | TRUE                                { BLit true }
+  | FALSE                              { BLit false }
+  | DIGITS                                { ILit $1 }
   | VAR                                    { Var $1 } ;
 
 pseudo:
