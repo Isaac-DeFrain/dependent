@@ -20,16 +20,36 @@
 check_derivation:
   | EOF                                      { None }
   | pseudo TURNSTILE type_assign EOF
-    { let (term, t) = $3 in
+    { let term, t = $3 in
       let open Assignment.Derive in
       Some (check_derivation { pseudo=$1; term; t }) }
   | pseudo NTURNSTILE type_assign EOF
-    { let (term, t) = $3 in
+    { let term, t = $3 in
       let open Assignment.Derive in
       Some (not (check_derivation { pseudo=$1; term; t })) } ;
 
 type_assign:
-  | term COLON t                         { ($1, $3) } ;
+  | term COLON t
+    { let open Vars in
+      let x, t = $1, $3 in
+      if t = TStar then
+        (begin match x with
+        | Var v -> decl_type_vars @= v
+        | _ -> () (* TODO *)
+        end ;
+        (x, t))
+      else
+        let tvars' = Type.tvars t in
+        try
+          if Vars.check_tvars tvars' then
+          begin match x with
+          | Var v -> decl_type_vars @= v
+          | _ -> () (* TODO *)
+          end ;
+          (x, t)
+        with
+        | Failure f ->
+            (print_endline f ; (x, TBad x)) } ;
 
 t:
   | LPAREN t RPAREN                            { $2 }
