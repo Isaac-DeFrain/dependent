@@ -27,9 +27,9 @@ let () =
   let v = vars true_lam in
   let fv = free_vars true_lam in
   print_res "true_lam vars" (v = ["x"; "y"] && fv = []) ;
-  let v = type_vars fun_ab_t in
+  let v = tvars fun_ab_t in
   print_res "fun_ab_t vars" (v = ["a"; "b"]) ;
-  let v = type_vars pi_ab_t in
+  let v = tvars pi_ab_t in
   print_res "pi_ab_t vars" (v = ["a"; "b"; "x"])
 
 (** type inference *)

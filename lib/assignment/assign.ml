@@ -27,7 +27,7 @@ let rec type_assignment b tenv pseudo = function
 | Lam (x, t, body) ->
     let pseudo' = TermMap.add (Var x) t pseudo in
     let t_body = type_assignment b tenv pseudo' body in
-    let t_vars = type_vars t_body in
+    let t_vars = tvars t_body in
     if List.mem x t_vars then TPi (x, t, t_body)
     else TFun (t, t_body)
 | App (f, g) as app ->
@@ -71,7 +71,7 @@ and type_match b tenv t = function
     begin match t with
     | TFun (in_t', out_t') ->
         type_match b tenv in_t in_t' && type_match b tenv out_t' out_t
-    | TPi (x, in_t', out_t') when not (List.mem x (type_vars out_t')) ->
+    | TPi (x, in_t', out_t') when not (List.mem x (tvars out_t')) ->
         type_match b tenv in_t' in_t && type_match b tenv out_t out_t'
     | TVar v as var ->
         var <> in_t && var <> out_t && env_lookup_match b tenv v self

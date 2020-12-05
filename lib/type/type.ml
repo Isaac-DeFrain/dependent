@@ -28,6 +28,8 @@ and t =
   | TPi of string * t * t
   | TStar
   | TBad of term
+  | TApp of t * t
+  | T of term
 
 module Term = struct
   type t = term
@@ -35,7 +37,7 @@ module Term = struct
 end
 module TermMap = Map.Make(Term)
 
-type pseudocontext = t TermMap.t
+type pseudo = t TermMap.t
 
 let rec string_of_type = function
 | TBool -> "Bool"
@@ -46,6 +48,8 @@ let rec string_of_type = function
     "Pi " ^ x ^ ": " ^ string_of_type t1 ^ ". " ^ string_of_type t2
 | TStar -> "*"
 | TBad term -> "Type error: " ^ string_of_term term
+| TApp (t1, t2) -> string_of_type t1 ^ " " ^ string_of_type t2
+| T term -> string_of_term term
 
 and string_of_term = function
 | Var v -> v
@@ -59,14 +63,23 @@ and string_of_term = function
 | Iunop (unop, i) -> string_of_int (unop i)
 | Ibiop (biop, i, j) -> string_of_int (biop i j)
 
-let rec type_vars = function
+let rec tvars = function
 | TVar x -> [x]
-| TFun (t_var, t_body) -> sort (type_vars t_var @ type_vars t_body)
-| TPi (x, t_var, t_body) -> sort (x :: type_vars t_var @ type_vars t_body)
+| TFun (t1, t2) -> tvars t1 @ tvars t2 |> sort
+| TPi (x, t, body) -> x :: tvars t @ tvars body |> sort
+| TApp (t1, t2) -> tvars t1 @ tvars t2 |> sort
+| _ -> []
+
+and free_tvars =function
+| TVar x -> [x]
+| TFun (t1, t2) -> free_tvars t1 @ free_tvars t2 |> sort
+| TPi (x, t, body) -> free_tvars t @ (free_tvars body |> remove x) |> sort
+| TApp (t1, t2) -> free_tvars t1 @ free_tvars t2 |> sort
 | _ -> []
 
 and sort = List.sort_uniq String.compare
 
+and remove x = List.filter ((<>) x)
 let print_type t = string_of_type t |> print_endline
 
 let print_term t = string_of_term t |> print_endline
@@ -82,7 +95,7 @@ let rec string_of_value = function
 and string_of_env env =
   VarMap.bindings env
   |> List.fold_left (fun acc (k, v) ->
-      acc @ ["(" ^ k ^ ", " ^ string_of_value v ^ ")"]) []
+      acc @ [ k ^ ": " ^ string_of_value v ]) []
   |> String.concat ", "
 
 let print_value v = string_of_value v |> print_endline
