@@ -1,1 +1,1 @@
-x : int, f : (int -> bool) |- f x : int
+a : * |- (\ x : a . x) : a -> a
