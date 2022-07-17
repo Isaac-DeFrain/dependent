@@ -30,7 +30,8 @@ check_derivation:
 
 type_assign:
   | term COLON t
-    { let open Vars in
+    { let open Type in
+      let open Vars in
       let x, t = $1, $3 in
       if t = TStar then
         (begin match x with

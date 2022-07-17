@@ -6,7 +6,7 @@
 *)
 {
   open Lexing
-  open Parser
+  open Parse
 
   exception SyntaxError of string
 

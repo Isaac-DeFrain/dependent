@@ -9,7 +9,7 @@ let print_res name res =
   if res then printf "\027[38;5;2m%s\027[0m" (name ^ " test" ^ " PASSED\n")
   else (
     printf "\027[38;5;1m%s\027[0m" (name ^ " test" ^ " FAILED\n") ;
-    failed_tests := !failed_tests @ [name] )
+    failed_tests := !failed_tests @ [name])
 
 let rec print_all name =
   let name' = String.uppercase_ascii name in
@@ -19,7 +19,7 @@ let rec print_all name =
     printf
       "\n\027[38;5;1m%s\027[0m\n"
       ("THE FOLLOWING " ^ name' ^ " TEST(S) FAILED:") ;
-    print_failed () )
+    print_failed ())
 
 and print_failed () =
   List.iter (printf "\027[38;5;1m- %s\027[0m\n") !failed_tests

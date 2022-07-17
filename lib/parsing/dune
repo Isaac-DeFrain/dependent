@@ -1,8 +1,0 @@
-(library
-  (name parsing)
-  (libraries type assignment vars))
-
-(ocamllex lexer)
-
-(menhir
-  (modules parser))

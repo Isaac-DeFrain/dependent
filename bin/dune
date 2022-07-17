@@ -1,4 +1,9 @@
 (executable
  (public_name dependent)
  (name main)
- (libraries dependent))
+ (libraries
+  ; external
+  core
+  core_unix.command_unix
+  ; internal
+  dependent))
